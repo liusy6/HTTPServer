@@ -22,11 +22,11 @@ Server::Server(int threadnum, int port)
 		HttpConn::userCount = 0;
     	HttpConn::srcDir = srcDir_;
     	//LOG << "srcdir = "<< srcDir_;
-    	//ÉèÖÃÎªETÄ£Ê½ 
+    	//è®¾ç½®ä¸ºETæ¨¡å¼ 
     	listenEvent_ |= EPOLLET;
     	connEvent_ |= EPOLLET;
     	HttpConn::isET = (connEvent_ & EPOLLET);
-    	//·şÎñÆ÷³õÊ¼»¯ 
+    	//æœåŠ¡å™¨åˆå§‹åŒ– 
     	if(!Init())  isClose_ = true;
 	}
 
@@ -38,29 +38,29 @@ Server::~Server() {
 
 void Server::start() {
 	int timeMS = -1;
-	//Ñ­»·µ÷ÓÃĞèÒªµÄº¯Êı 
+	//å¾ªç¯è°ƒç”¨éœ€è¦çš„å‡½æ•° 
 	while(!isClose_) {
 		timeMS = timer_->GetNextTick();
-		//µ÷ÓÃepoll_wait()£¨×èÈûIO£© 
+		//è°ƒç”¨epoll_wait()ï¼ˆé˜»å¡IOï¼‰ 
 		int eventCount = epoller_->Wait(timeMS);
 		for(int i = 0; i < eventCount; ++i) {
 			int fd = epoller_->GetEventFd(i);
 			//LOG << "fd = "<< fd;
 			cout<<"fd = "<<fd<<endl;
-			//»ñÈ¡ÒÑ¾ÍĞ÷fd¶ÔÓ¦µÄÊÂ¼ş 
+			//è·å–å·²å°±ç»ªfdå¯¹åº”çš„äº‹ä»¶ 
 			uint32_t events = epoller_->GetEvents(i); 
 			if(fd == listenFd_) HandleListen();
-			//µ±¿Í»§¶Ë¹Ø±Õ»òÕß³öÏÖ´íÎó¾Í¹Ø±ÕÁ¬½Ó 
+			//å½“å®¢æˆ·ç«¯å…³é—­æˆ–è€…å‡ºç°é”™è¯¯å°±å…³é—­è¿æ¥ 
 			else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
 				assert(users_.count(fd) > 0);
                 CloseConn(&users_[fd]);
 			}
-			//´¦Àí¶Á¾ÍĞ÷ÊÂ¼ş 
+			//å¤„ç†è¯» 
 			else if(events & EPOLLIN) {
 				assert(users_.count(fd) > 0);
                 HandleRead(&users_[fd]);
 			}
-			//´¦Àí¶Á¾ÍĞ÷ÊÂ¼ş
+			//å¤„ç†å†™
 			else if(events & EPOLLOUT) {
 				assert(users_.count(fd) > 0);
                 HandleWrite(&users_[fd]);
@@ -76,7 +76,7 @@ void Server::SendError(int fd, const char* info) {
 	close(fd);
 }
 
-//¹Ø±ÕÁ¬½Ó 
+//å…³é—­è¿æ¥ 
 void Server::CloseConn(HttpConn* client) {
 	assert(client);
 	//LOG<<"closeconn fd:"<<client->GetFd();
@@ -85,18 +85,18 @@ void Server::CloseConn(HttpConn* client) {
 	client->Close();
 }
 
-//Ìí¼Ó¿Í»§ 
+//æ·»åŠ å®¢æˆ· 
 void Server::AddClient(int fd, sockaddr_in addr) {
 	assert(fd > 0);
-	cout<<"add client fd£º"<<fd<<endl;
+	cout<<"add client fdï¼š"<<fd<<endl;
 	users_[fd].init(fd, addr);
-	//Ìí¼Ó½øÊ±¼ä¶ÑÖĞ£¬³¬Ê±»Øµ÷CloseConnº¯Êı 
+	//æ·»åŠ è¿›æ—¶é—´å †ä¸­ï¼Œè¶…æ—¶å›è°ƒCloseConnå‡½æ•° 
 	timer_->add(fd, TimeoutMS, std::bind(&Server::CloseConn, this, &users_[fd]));
 	epoller_->AddFd(fd, EPOLLIN | connEvent_);
 	setSocketNodelay(fd);
 }
 
-//´¦Àí¼àÌıÊÂ¼ş 
+//å¤„ç†ç›‘å¬äº‹ä»¶ 
 void Server::HandleListen() {
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
@@ -116,7 +116,7 @@ void Server::HandleRead(HttpConn* client) {
 	assert(client);
 	ExtentTime(client);
 	cout<<"handleread"<<endl;
-	//ÍùÏß³Ì³ØÖĞÌí¼ÓÈÎÎñ 
+	//å¾€çº¿ç¨‹æ± ä¸­æ·»åŠ ä»»åŠ¡ 
     threadpool_->AddTask(std::bind(&Server::OnRead, this, client));
 }
 
@@ -124,11 +124,11 @@ void Server::HandleWrite(HttpConn* client) {
 	assert(client);
 	ExtentTime(client);
 	cout<<"handlewrite"<<endl;
-	//ÍùÏß³Ì³ØÖĞÌí¼ÓÈÎÎñ
+	//å¾€çº¿ç¨‹æ± ä¸­æ·»åŠ ä»»åŠ¡
 	threadpool_->AddTask(std::bind(&Server::OnWrite, this, client));
 }
 
-//µ±Î´¹Ø±ÕÁ¬½ÓµÄfd³öÏÖĞÂµÄ²Ù×÷¾Í¸üĞÂÆäÏûÍöÊ±¼ä²¢µ÷ÕûÊ±¼ä¶Ñ 
+//å½“æœªå…³é—­è¿æ¥çš„fdå‡ºç°æ–°çš„æ“ä½œå°±æ›´æ–°å…¶æ¶ˆäº¡æ—¶é—´å¹¶è°ƒæ•´æ—¶é—´å † 
 void Server::ExtentTime(HttpConn* client) {
 	assert(client);
 	timer_->adjust(client->GetFd(), TimeoutMS);
@@ -139,7 +139,7 @@ void Server::OnRead(HttpConn* client) {
     int readErrno = 0;
     int ret = client->read(&readErrno);
     cout<<"ret = "<<ret<<endl;
-    //¶ÁÈ¡Ê§°Ü¹Ø±ÕÁ¬½Ó£¬³É¹¦Ôò¼ÌĞø´¦Àí 
+    //è¯»å–å¤±è´¥å…³é—­è¿æ¥ï¼ŒæˆåŠŸåˆ™ç»§ç»­å¤„ç† 
     if(ret <= 0 && readErrno != EAGAIN) {
         CloseConn(client);
 	return;
@@ -178,9 +178,9 @@ void Server::OnWrite(HttpConn* client) {
     CloseConn(client);
 }
 
-//³õÊ¼»¯ 
+//åˆå§‹åŒ– 
 bool Server::Init() {
-	//socket´´½¨¡¢°ó¶¨²¢¼àÌı£¬·µ»Ø¼àÌıfd 
+	//socketåˆ›å»ºã€ç»‘å®šå¹¶ç›‘å¬ï¼Œè¿”å›ç›‘å¬fd 
 	listenFd_ = socket_bind_listen(port_);
 	assert(listenFd_);
 	cout<<"listenfd = "<<listenFd_<<endl;
