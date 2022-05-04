@@ -13,7 +13,7 @@ typedef std::chrono::high_resolution_clock Clock;
 typedef std::chrono::milliseconds MS;
 typedef Clock::time_point TimeStamp;
 
-//定义时间节点结构 
+//瀹氫箟鏃堕棿鑺傜偣缁撴瀯
 struct TimerNode {
     int id;
     TimeStamp expires;
