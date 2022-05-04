@@ -10,6 +10,7 @@ class ThreadPool {
 	public:
 		explicit ThreadPool(size_t threadCount = 8): pool_(std::make_shared<Pool>()) {
             assert(threadCount > 0);
+            //创建工作线程 
             for(size_t i = 0; i < threadCount; i++) {
                 std::thread([pool = pool_] {
                     std::unique_lock<std::mutex> locker(pool->mtx);
@@ -41,8 +42,10 @@ class ThreadPool {
         }
     }
     
+    //模板参数F为任务类 
     template<class F>
     void AddTask(F&& task) {
+    	//操作工作队列要加锁，因为被所有线程共享 
         {
             std::lock_guard<std::mutex> locker(pool_->mtx);
             pool_->tasks.emplace(std::forward<F>(task));
