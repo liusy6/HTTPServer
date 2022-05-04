@@ -3,6 +3,7 @@
 
 using namespace std;
 
+//插入新时间节点后向上调整堆 
 void Timer::siftup(size_t i) {
     assert(i >= 0 && i < heap_.size());
     size_t j = (i - 1) / 2;
@@ -14,6 +15,7 @@ void Timer::siftup(size_t i) {
     }
 }
 
+//交换时间节点 
 void Timer::SwapNode(size_t i, size_t j) {
     assert(i >= 0 && i < heap_.size());
     assert(j >= 0 && j < heap_.size());
@@ -22,6 +24,7 @@ void Timer::SwapNode(size_t i, size_t j) {
     ref_[heap_[j].id] = j;
 } 
 
+//删除节点后开始向下调整 
 bool Timer::siftdown(size_t index, size_t n) {
     assert(index >= 0 && index < heap_.size());
     assert(n >= 0 && n <= heap_.size());
@@ -37,19 +40,20 @@ bool Timer::siftdown(size_t index, size_t n) {
     return i > index;
 }
 
+//添加时间节点 
 void Timer::add(int id, int timeout, const TimeoutCallBack& cb) {
     assert(id >= 0);
     size_t i;
+    //当前无该连接fd，在堆尾插入新节点并通过siftup()对堆进行调整 
     if(ref_.count(id) == 0) {
-        /* 新节点：堆尾插入，调整堆 */
-	//cout<<"insert newnode"<<endl;
+		cout<<"insert newnode"<<endl;
         i = heap_.size();
         ref_[id] = i;
         heap_.push_back({id, Clock::now() + MS(timeout), cb});
         siftup(i);
     } 
+    //连接fd已存在就更新其消亡时间并调整堆 
     else {
-        /* 已有结点：调整堆 */
         i = ref_[id];
         heap_[i].expires = Clock::now() + MS(timeout);
         heap_[i].cb = cb;
@@ -59,8 +63,8 @@ void Timer::add(int id, int timeout, const TimeoutCallBack& cb) {
     }
 }
 
+//删除指定id结点，并触发回调函数
 void Timer::doWork(int id) {
-    /* 删除指定id结点，并触发回调函数 */
     if(heap_.empty() || ref_.count(id) == 0) {
         return;
     }
@@ -70,10 +74,10 @@ void Timer::doWork(int id) {
     del(i);
 }
 
+//删除指定位置的结点
 void Timer::del(size_t index) {
-    /* 删除指定位置的结点 */
     assert(!heap_.empty() && index >= 0 && index < heap_.size());
-    /* 将要删除的结点换到队尾，然后调整堆 */
+    //将要删除的结点换到队尾，然后调整堆
     size_t i = index;
     size_t n = heap_.size() - 1;
     assert(i <= n);
@@ -83,20 +87,20 @@ void Timer::del(size_t index) {
             siftup(i);
         }
     }
-    /* 队尾元素删除 */
+    //删除队尾元素
     ref_.erase(heap_.back().id);
     heap_.pop_back();
 }
 
+//调整指定id的结点
 void Timer::adjust(int id, int timeout) {
-    /* 调整指定id的结点 */
     assert(!heap_.empty() && ref_.count(id) > 0);
     heap_[ref_[id]].expires = Clock::now() + MS(timeout);;
     siftdown(ref_[id], heap_.size());
 }
 
+//心搏函数，循环从堆顶开始清除超时结点
 void Timer::tick() {
-    /* 清除超时结点 */
     if(heap_.empty()) {
         return;
     }
@@ -111,6 +115,7 @@ void Timer::tick() {
     }
 }
 
+//删除堆顶元素 
 void Timer::pop() {
     assert(!heap_.empty());
     del(0);
@@ -121,6 +126,7 @@ void Timer::clear() {
     heap_.clear();
 }
 
+//获取下一次调用心搏函数清除超时节点的时间与当前时间的时间差 
 int Timer::GetNextTick() {
     tick();
     size_t res = -1;
