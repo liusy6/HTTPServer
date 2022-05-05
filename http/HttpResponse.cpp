@@ -2,6 +2,7 @@
 
 using namespace std;
 
+//后缀类型 
 const unordered_map<string, string> HttpResponse::SUFFIX_TYPE = {
     { ".html",  "text/html" },
     { ".xml",   "text/xml" },
@@ -24,6 +25,7 @@ const unordered_map<string, string> HttpResponse::SUFFIX_TYPE = {
     { ".js",    "text/javascript "},
 };
 
+//状态码 
 const unordered_map<int, string> HttpResponse::CODE_STATUS = {
     { 200, "OK" },
     { 400, "Bad Request" },
@@ -61,7 +63,7 @@ void HttpResponse::Init(const string& srcDir, string& path, bool isKeepAlive, in
 }
 
 void HttpResponse::MakeResponse(Buffer& buff) {
-    /* 判断请求的资源文件 */
+    //判断请求的资源文件
     if(stat((srcDir_ + path_).data(), &mmFileStat_) < 0 || S_ISDIR(mmFileStat_.st_mode)) {
         code_ = 404;
     }
@@ -92,6 +94,7 @@ void HttpResponse::ErrorHtml_() {
     }
 }
 
+//添加状态行 
 void HttpResponse::AddStateLine_(Buffer& buff) {
     string status;
     if(CODE_STATUS.count(code_) == 1) {
@@ -104,6 +107,7 @@ void HttpResponse::AddStateLine_(Buffer& buff) {
     buff.Append("HTTP/1.1 " + to_string(code_) + " " + status + "\r\n");
 }
 
+//添加头部 
 void HttpResponse::AddHeader_(Buffer& buff) {
     buff.Append("Connection: ");
     if(isKeepAlive_) {
@@ -115,6 +119,7 @@ void HttpResponse::AddHeader_(Buffer& buff) {
     buff.Append("Content-type: " + GetFileType_() + "\r\n");
 }
 
+//添加主体 
 void HttpResponse::AddContent_(Buffer& buff) {
     int srcFd = open((srcDir_ + path_).data(), O_RDONLY);
     if(srcFd < 0) { 
@@ -124,7 +129,6 @@ void HttpResponse::AddContent_(Buffer& buff) {
 
     /* 将文件映射到内存提高文件的访问速度 
         MAP_PRIVATE 建立一个写入时拷贝的私有映射*/
-    //LOG_DEBUG("file path %s", (srcDir_ + path_).data());
     int* mmRet = (int*)mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
     if(*mmRet == -1) {
         ErrorContent(buff, "File NotFound!");
@@ -155,6 +159,7 @@ string HttpResponse::GetFileType_() {
     return "text/plain";
 }
 
+//文件不存在 
 void HttpResponse::ErrorContent(Buffer& buff, string message) 
 {
     string body;
@@ -168,7 +173,7 @@ void HttpResponse::ErrorContent(Buffer& buff, string message)
     }
     body += to_string(code_) + " : " + status  + "\n";
     body += "<p>" + message + "</p>";
-    body += "<hr><em>TinyWebServer</em></body></html>";
+    body += "<hr><em>HTTPServer</em></body></html>";
 
     buff.Append("Content-length: " + to_string(body.size()) + "\r\n\r\n");
     buff.Append(body);
