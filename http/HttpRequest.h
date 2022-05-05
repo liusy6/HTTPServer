@@ -8,6 +8,7 @@
 
 class HttpRequest {
 public:
+	//解析客户请求时，状态机所处的状态 
     typedef enum PARSE_STATE {
         REQUEST_LINE,
         HEADERS,
@@ -15,6 +16,7 @@ public:
         FINISH        
     }PARSE_STATE;
     
+	//服务器处理HTTP请求的可能结果 
     typedef enum HTTP_CODE {
         NO_REQUEST = 0,
         GET_REQUEST,
@@ -48,9 +50,7 @@ private:
 
     void ParsePath_();
     void ParsePost_();
-    //void ParseFromUrlencoded_();
-
-    //static bool UserVerify(const std::string& name, const std::string& pwd, bool isLogin);
+    void ParseFromUrlencoded_();
 
     PARSE_STATE state_;
     std::string method_, path_, version_, body_;
