@@ -34,14 +34,15 @@ class HttpConn {
     	static std::atomic<int> userCount;
     
 	private:
+		//该HTTP连接的socket和对方的socket地址 
    		int fd_;
     	struct  sockaddr_in addr_;
 		bool isClose_;
     	int iovCnt_;
     	struct iovec iov_[2];
     
-    	Buffer readBuff_; // 读缓冲区
-    	Buffer writeBuff_; // 写缓冲区
+    	Buffer readBuff_; //读缓冲区
+    	Buffer writeBuff_; //写缓冲区
 
     	HttpRequest request_;
     	HttpResponse response_;
